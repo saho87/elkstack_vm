@@ -1,0 +1,58 @@
+---
+# logstash
+- name: Ansible Test Playbook
+  become: yes
+  hosts: logstash
+  tasks:
+    - name: Update yum package index
+      yum:
+        update_cache: yes
+    - name: Install Java 8 package
+      yum:
+        name: java-1.8.0-openjdk
+        state: present
+    - name: Execute java -version command
+      command: java -version
+      register: java_version
+    - name: print java version
+      debug:
+        var: java_version.stderr_lines[0]
+# elastic
+
+- name: Elasticsearch
+  become: yes
+  hosts: elastic
+  tasks:
+    - name: Update yum package index
+      yum:
+        update_cache: yes
+    - name: Install Java 8 package
+      yum:
+        name: java-1.8.0-openjdk
+        state: present
+    - name: Execute java -version command
+      command: java -version
+      register: java_version
+    - name: print java version
+      debug:
+        var: java_version.stderr_lines[0]
+    - name: Install Elasticsearch
+      apt_key:
+        url: http://packages.elasticsearch.org/GPG-KEY-elasticsearch
+        state: present
+    - name: Add Elasticsearch apt repository
+      apt_repository:
+        repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+        state: present
+      tags: elasticsearch
+
+    - name: Install Elasticsearch
+      apt:
+        name: elasticsearch
+        state: present
+
+    - name: Start Elasticsearch service
+      service:
+        name: elasticsearch
+        state: started
+...

@@ -1,0 +1,85 @@
+---
+# nginx
+- name: nginx and filebeat
+  become: yes
+  hosts: filebeat
+  tasks:
+    - name: install EPEL Software Repository
+      yum:
+        name: epel-release.noarch
+        state: present
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+    - name: start nginx
+      service:
+        name: nginx
+        state: started
+# filebeat install
+    - name: Import public signing key
+      rpm_key:
+        key: https://packages.elastic.co/GPG-KEY-elasticsearch
+        state: present
+    - name: Add Beats repository file
+      copy:
+        content: |
+          [elastic-8.x]
+          name=Elastic repository for 8.x packages
+          baseurl=https://artifacts.elastic.co/packages/8.x/yum
+          gpgcheck=1
+          gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+          enabled=1
+          autorefresh=1
+          type=rpm-md
+        dest: /etc/yum.repos.d/elastic.repo
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Install Filebeat
+      yum:
+        name: filebeat
+        state: present
+    - name: Enable Filebeat service
+      systemd:
+        name: filebeat
+        enabled: true
+# filebeat config
+      
+    - name: Set Logstash hosts in Filebeat configuration
+      replace:
+        path: /etc/filebeat/filebeat.yml
+        regexp: '^#output\.logstash:'
+        replace: 'output.logstash:\n  hosts: ["192.168.60.5:5044"]'
+      #when: ansible_distribution_major_version|int >= 8
+     # !!!!wird aktuell bei jedem durchlauf erzeugt und ist dann mehrfahr in filebeat.yml
+     # wie wird die default filebeat.yml wiederhergestellt= 
+    
+    - name: Add Nginx access log input to Filebeat configuration
+      blockinfile:
+        path: /etc/filebeat/filebeat.yml
+        block: |
+          - type: log
+            enabled: true
+            paths:
+              - /var/log/nginx/access.log
+            fields:
+              type: nginx_access
+            fields_under_root: true
+        insertafter: '^filebeat\.inputs:'
+
+
+
+    - name: Restart Filebeat service
+      systemd:
+        name: filebeat
+        state: restarted
+      register: filebeat_status
+
+    - name: check filebeat service status
+      debug: 
+        var: filebeat_status
+
+
+...
+    

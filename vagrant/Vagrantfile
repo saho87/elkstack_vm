@@ -1,0 +1,27 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.ssh.insert_key = false
+  config.vm.synced_folder ".", "/vagrant", disable:true
+  config.vm.provider :virtualbox do |v|
+    v.memory = 256
+    v.linked_clone = true
+  end
+
+  # Webserver with filebeat
+  config.vm.define "filebeat" do |filebeat|
+    filebeat.vm.hostname = "filebeat.test"
+    filebeat.vm.network :private_network, ip:"192.168.60.4"
+  end
+
+  # Logstash server
+  config.vm.define "logstash" do |logstash|
+    logstash.vm.hostname = "logstash.test"
+    logstash.vm.network :private_network, ip:"192.168.60.5"
+  end
+
+  # elastic and kibana
+  config.vm.define "elastic" do |elastic|
+    elastic.vm.hostname = "elastic.test"
+    elastic.vm.network :private_network, ip:"192.168.60.6"
+  end
+end
