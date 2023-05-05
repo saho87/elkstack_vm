@@ -1,24 +1,4 @@
 ---
-# logstash
-- name: Ansible Test Playbook
-  become: yes
-  hosts: logstash
-  tasks:
-    - name: Update yum package index
-      yum:
-        update_cache: yes
-    - name: Install Java 8 package
-      yum:
-        name: java-1.8.0-openjdk
-        state: present
-    - name: Execute java -version command
-      command: java -version
-      register: java_version
-    - name: print java version
-      debug:
-        var: java_version.stderr_lines[0]
-# elastic
-
 - name: Elasticsearch
   become: yes
   hosts: elastic

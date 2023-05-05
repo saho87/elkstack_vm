@@ -1,0 +1,47 @@
+---
+# logstash
+- name: Ansible Test Playbook
+  become: yes
+  hosts: logstash
+  tasks:
+    - name: Update yum package index
+      yum:
+        update_cache: yes
+    - name: Install Java 8 package
+      yum:
+        name: java-1.8.0-openjdk
+        state: present
+    - name: Execute java -version command
+      command: java -version
+      register: java_version
+    - name: print java version
+      debug:
+        var: java_version.stderr_lines[0]
+    - name: Import public signing key
+      rpm_key:
+        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+    - name: Add logstash repository file
+      copy:
+        content: |
+          [logstash-8.x]
+          name=Elastic repository for 8.x packages
+          baseurl=https://artifacts.elastic.co/packages/8.x/yum
+          gpgcheck=1
+          gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+          enabled=1
+          autorefresh=1
+          type=rpm-md
+        dest: /etc/yum.repos.d/logstash.repo
+        owner: root
+        group: root
+        mode: '0644'
+    - name: install logstash
+      yum:
+        name: logstash
+        state: present
+    - name: start logstash
+      service:
+        name: logstash
+        state: started 
+...
